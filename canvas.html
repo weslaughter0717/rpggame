@@ -1,4 +1,3 @@
-
 <canvas id="ctx" height="500" width="500" style="border: 1px solid #000000;"></canvas>    
 
 <script>
@@ -10,7 +9,11 @@
     var frameCount = 0;
     var score = 0;
     //player
+    
+    // var Entity = function("type", "id", "hp",){
+    // }
     var player = {
+        type: "player",
         name: "P",
         hp: 10,
         x: 50,
@@ -20,15 +23,18 @@
         width: 20,
         height: 20,
         color: "green",
+        pressingDown: false,
+        pressingUp: false,
+        pressingRight: false,
+        pressingLeft: false,
         atkSpd: 1,
+        aimAngle: 0,
         attackCounter: 0
     };
     //enemy
 var enemyList= {};
 var upgradeList = {};
 var bulletList = {};
-
-
 var distanceBetween = function (entity1, entity2) {
     var vx = entity1.x - entity2.x;
     var vy = entity1.y - entity2.y;
@@ -41,16 +47,15 @@ var testCollison = function (entity1, entity2) {
         y: entity1.y - entity1.height/2,
         width: entity1.width,
         height: entity1.height
-    }
+    };
     var rect2 = {
         x: entity2.x - entity2.width/2,
         y: entity2.y - entity2.width/2,
         width: entity2.width,
         height: entity2.height
-    }
-    return testCollisonRectRect(rect1, rect2)
+    };
+    return testCollisonRectRect(rect1, rect2);
 };
-
 // test collision for rects
 var testCollisonRectRect = function(rect1, rect2) {
     return rect1.x <= rect2.x + rect2.width
@@ -58,9 +63,9 @@ var testCollisonRectRect = function(rect1, rect2) {
         && rect1.y <= rect2.y + rect2.height
         && rect2.y <= rect1.y + rect1.height;
 };
-
 var Enemy = function(id, x, y, spdX, spdY, width, height) {
     var enemy3 = {
+        type: 'enemy',
         x:x,
         y:y,
         spdX:spdX,
@@ -69,16 +74,18 @@ var Enemy = function(id, x, y, spdX, spdY, width, height) {
         id:id,
         width: width,
         height: height,
-        color: "red"
+        color: "red",
+        atkSpd: 1,
+        attackCounter: 0,
+        aimAngle: 0
     
     };
         // try enemy3
     enemyList[id] = enemy3;
 };
-
-
 var Upgrade = function(id, x, y, spdX, spdY, width, height, category, color) {
     var upgrade = {
+        type: "upgrade",
         x:x,
         y:y,
         spdX:spdX,
@@ -91,13 +98,14 @@ var Upgrade = function(id, x, y, spdX, spdY, width, height, category, color) {
         category: category
     
     };
-    console.log(upgrade.category)
+    console.log(upgrade.category);
         // try enemy3
     upgradeList[id] = upgrade;
 };
     
 var Bullet = function(id, x, y, spdX, spdY, width, height) {
     var bullet = {
+        type: 'bullet',
         x:x,
         y:y,
         spdX:spdX,
@@ -113,37 +121,110 @@ var Bullet = function(id, x, y, spdX, spdY, width, height) {
         // try enemy3
     bulletList[id] = bullet;
 };
-
-
 document.onmousemove = function(mouse) {
     var mouseX = mouse.clientX - document.getElementById("ctx").getBoundingClientRect().left;
     var mouseY = mouse.clientY - document.getElementById("ctx").getBoundingClientRect().top;
-    if(mouseX < player.width/2) 
-        mouseX = 0
-    if(mouseX > width - player.width/2)
-        mouseX = width
+// //     if(mouseX < player.width/2) 
+// //         mouseX = 0
+// //     if(mouseX > width - player.width/2)
+// //         mouseX = width
     
-    if(mouseY < player.height/2) 
-        mouseY = 0
-    if(mouseY > height -player.height/2) 
-        mouseY = height
+// //     if(mouseY < player.height/2) 
+// //         mouseY = 0
+// //     if(mouseY > height -player.height/2) 
+// //         mouseY = height
     
-    player.x = mouseX;
-    player.y = mouseY;
+//     player.x = mouseX;
+//     player.y = mouseY;
+
+        mouseX -= player.x;
+        mouseY -= player.y;
+
+        player.aimAngle = Math.atan2(mouseY, mouseX)/ Math.PI*180;
 };
-
-
-
+  
+document.onkeydown = function(event) {
+    if(event.keyCode === 87){
+        player.pressingUp = true;
+    } else if(event.keyCode === 68){
+        player.pressingRight = true;
+    } else if(event.keyCode === 83){
+        player.pressingDown = true;
+    } else if(event.keyCode === 65){
+        player.pressingLeft = true;
+    }
+};
+document.onkeyup = function(event) {
+    if(event.keyCode === 87){
+        player.pressingUp = false;
+    } else if(event.keyCode === 68){
+        player.pressingRight = false;
+    } else if(event.keyCode === 83){
+        player.pressingDown = false;
+    } else if(event.keyCode === 65){
+        player.pressingLeft = false;
+    }
+};
+var updatePlayerPosition = function(){
+    if(player.pressingUp)
+        player.y -= 10;
+    if(player.pressingRight)
+        player.x += 10;
+    if(player.pressingDown)
+        player.y += 10;
+    if(player.pressingLeft)
+        player.x -= 10;
     
+    
+    if(player.x < player.width/2) 
+        player.x = 0;
+    if(player.x > width - player.width/2)
+        player.x= width;
+    
+    if(player.y < player.height/2) 
+        player.y = 0;
+    if(player.y > height - player.height/2) 
+        player.y = height;
+};
+   
 var updateEntity = function(anything) {
     updateEntityPosition(anything);
     drawEntity(anything);
     
     
 };
-
-
 var updateEntityPosition = function(anything){
+    if(anything.type === "player"){
+        if(player.pressingUp)
+            player.y -= 10;
+        if(player.pressingRight)
+            player.x += 10;
+        if(player.pressingDown)
+            player.y += 10;
+        if(player.pressingLeft)
+            player.x -= 10;
+    
+    
+        if(player.x < player.width/2) 
+            player.x = 0;
+        if(player.x > width - player.width/2)
+            player.x= width;
+    
+        if(player.y < player.height/2) 
+            player.y = 0;
+        if(player.y > height - player.height/2) 
+            player.y = height;
+    } else{
+    
+    if(anything.type === "enemy"){
+        
+    }
+    if(anything.type === "upgrade"){
+        
+    }
+    if(anything.type === "bullet"){
+        
+    }
     anything.x += anything.spdX;
     anything.y += anything.spdY;
     if(anything.x < 0 || anything.x > width) {
@@ -154,20 +235,51 @@ var updateEntityPosition = function(anything){
         anything.spdY= -anything.spdY;
     }
 };
+}
     
 var drawEntity = function(anything) {
-    ctx.save()
+    ctx.save();
     ctx.fillStyle = anything.color;
     ctx.fillRect(anything.x - anything.width/2, anything.y - anything.height/2, anything.width, anything.height);
     ctx.restore();
 };
 document.onclick = function(mouse){
-    if(player.attackCounter > 25) {
-        randomlyGenerateBullets();
-        player.attackCounter = 0;
+        performAttack(player);
+};
+
+var performAttack = function(actor) {
+     if(actor.attackCounter > 25) {
+        generateBullets(actor);
+        actor.attackCounter = 0;
+    }
+};
+
+document.oncontextmenu = function(mouse){
+    performSpecialAttack(player);
+
+    mouse.preventDefault();
+};
+
+var performSpecialAttack = function(actor) {
+    if(player.attackCounter > 50) {
+        
+        generateBullets(actor, actor.aimAngle - 5);
+        generateBullets(actor, actor.aimAngle);
+        generateBullets(actor, actor.aimAngle + 5);
+    // while loop
+    // let i = 0;
+    // while(i < 360){
+    //     generateBullets(player, i)
+    //     i++
+    //  }
+    
+    // for(let i = 0; i < 360; i++){
+    //     generateBullets(player, i)
+    // }
+    // }
+    // mouse.preventDefault();
     }
 }
-
 var randomlyGenerateEnemy = function() {
     var height = 10+Math.random()*30;
     var width = 10+Math.random()*40;
@@ -191,26 +303,25 @@ var randomlyGenerateUpgrade = function() {
         var color = "orange";
     }else{
          var category = "atkSpd";
-         var color = "black"
+         var color = "black";
     }
     Upgrade(id, x, y, spdX, spdY, width, height, category, color);
     // console.log(category)
 };
-
-var randomlyGenerateBullets = function() {
+var generateBullets = function(actor, angleOverRide) {
     var height = 10;
     var width = 10;
-    var x = player.x;
-    var y = player.y;
+    var x = actor.x;
+    var y = actor.y;
     var id = Math.random();
-    var angle = Math.random()*360;
+    var angle = actor.aimAngle;
+    if(angleOverRide !== undefined){
+        angle = angleOverRide;
+    }
     var spdX = Math.cos(angle/180*Math.PI)*5;
     var spdY = Math.sin(angle/180*Math.PI)*5;
     Bullet(id, x, y, spdX, spdY, width, height);
 };
-
-
-
 var update = function() {
     ctx.clearRect(0, 0, width, height);
     frameCount++;
@@ -221,13 +332,12 @@ var update = function() {
     if(frameCount % 75 === 0) {
         randomlyGenerateUpgrade();
     }
-    player.attackCounter += player.atkSpd
-
+    player.attackCounter += player.atkSpd;
     
     for(let i in bulletList){
         updateEntity(bulletList[i]);
         
-        bulletList[i].timer++
+        bulletList[i].timer++;
             if(bulletList[i].timer > 75) {
                 delete bulletList[i];
                 continue;
@@ -272,13 +382,12 @@ var update = function() {
                 var timeSurvived = Date.now() - timeSinceGameStarted;
                 console.log('you lose');
                 startNewGame();
-                console.log(timeSurvived)
+                console.log(timeSurvived);
         }
-    drawEntity(player);
+    updateEntity(player);
     ctx.fillText(player.hp + "HP", 30, 30);
     ctx.fillText(score + "Score", 200, 30);
 };
-
 var startNewGame = function() {
         timeSinceGameStarted = Date.now();
         player.hp = 10;
@@ -286,20 +395,14 @@ var startNewGame = function() {
         score = 0;
         enemyList = {};
         upgradeList = {};
-        bulletList = {}
+        bulletList = {};
         randomlyGenerateEnemy();
         randomlyGenerateEnemy();
         randomlyGenerateEnemy();
     
-}
-
-
-
+};
 startNewGame();
-
     
 setInterval(update, 100);
     
 </script>
-
-
