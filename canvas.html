@@ -1,6 +1,7 @@
 <canvas id="ctx" height="500" width="500" style="border: 1px solid #000000;"></canvas>    
 
 <script>
+    // canvas 
     var ctx = document.getElementById("ctx").getContext("2d");
     ctx.font ="30px Arial";
     var height = 500;
@@ -8,11 +9,13 @@
     var timeSinceGameStarted = Date.now();
     var frameCount = 0;
     var score = 0;
-    //player
-    
-    // var Entity = function("type", "id", "hp",){
-    // }
-    var player = {
+        // empty objects
+    var enemyList= {};
+    var upgradeList = {};
+    var bulletList = {};
+   
+    // define our player
+var player = {
         type: "player",
         name: "P",
         hp: 10,
@@ -31,15 +34,81 @@
         aimAngle: 0,
         attackCounter: 0
     };
-    //enemy
-var enemyList= {};
-var upgradeList = {};
-var bulletList = {};
+    // define the enemy
+var Enemy = function(id, x, y, spdX, spdY, width, height, atkSpd, attackCounter, aimAngle) {
+    var enemy3 = {
+        type: 'enemy',
+        x:x,
+        y:y,
+        spdX:spdX,
+        spdY:spdY,
+        name: "E",
+        id:id,
+        width: width,
+        height: height,
+        color: "red",
+        atkSpd: 1,
+        attackCounter: 0,
+        aimAngle: 0
+    
+    };
+        // try enemy3
+    enemyList[id] = enemy3;
+};
+
+// all the upgrade objects
+var Upgrade = function(id, x, y, spdX, spdY, width, height, category, color) {
+    var upgrade = {
+        type: "upgrade",
+        x:x,
+        y:y,
+        spdX:spdX,
+        spdY:spdY,
+        name: "E",
+        id:id,
+        width: width,
+        height: height,
+        color: color,
+        category: category
+    
+    };
+    console.log(upgrade.category);
+        // try enemy3
+    upgradeList[id] = upgrade;
+};
+    
+
+    
+    
+var Bullet = function(id, x, y, spdX, spdY, width, height) {
+    var bullet = {
+        type: 'bullet',
+        x:x,
+        y:y,
+        spdX:spdX,
+        spdY:spdY,
+        name: "E",
+        id:id,
+        width: width,
+        height: height,
+        color: "blue",
+        timer: 0
+    
+    };
+
+    bulletList[id] = bullet;
+};
+
+
+
+
+// distance betweeen two points of anything
 var distanceBetween = function (entity1, entity2) {
     var vx = entity1.x - entity2.x;
     var vy = entity1.y - entity2.y;
     return Math.sqrt(vx*vx+vy*vy);
 };
+
 // testing collision for points
 var testCollison = function (entity1, entity2) {
     var rect1 = {
@@ -63,64 +132,12 @@ var testCollisonRectRect = function(rect1, rect2) {
         && rect1.y <= rect2.y + rect2.height
         && rect2.y <= rect1.y + rect1.height;
 };
-var Enemy = function(id, x, y, spdX, spdY, width, height) {
-    var enemy3 = {
-        type: 'enemy',
-        x:x,
-        y:y,
-        spdX:spdX,
-        spdY:spdY,
-        name: "E",
-        id:id,
-        width: width,
-        height: height,
-        color: "red",
-        atkSpd: 1,
-        attackCounter: 0,
-        aimAngle: 0
-    
-    };
-        // try enemy3
-    enemyList[id] = enemy3;
-};
-var Upgrade = function(id, x, y, spdX, spdY, width, height, category, color) {
-    var upgrade = {
-        type: "upgrade",
-        x:x,
-        y:y,
-        spdX:spdX,
-        spdY:spdY,
-        name: "E",
-        id:id,
-        width: width,
-        height: height,
-        color: color,
-        category: category
-    
-    };
-    console.log(upgrade.category);
-        // try enemy3
-    upgradeList[id] = upgrade;
-};
-    
-var Bullet = function(id, x, y, spdX, spdY, width, height) {
-    var bullet = {
-        type: 'bullet',
-        x:x,
-        y:y,
-        spdX:spdX,
-        spdY:spdY,
-        name: "E",
-        id:id,
-        width: width,
-        height: height,
-        color: "blue",
-        timer: 0
-    
-    };
-        // try enemy3
-    bulletList[id] = bullet;
-};
+
+
+
+
+
+// this is what aims the bullets
 document.onmousemove = function(mouse) {
     var mouseX = mouse.clientX - document.getElementById("ctx").getBoundingClientRect().left;
     var mouseY = mouse.clientY - document.getElementById("ctx").getBoundingClientRect().top;
@@ -143,6 +160,8 @@ document.onmousemove = function(mouse) {
         player.aimAngle = Math.atan2(mouseY, mouseX)/ Math.PI*180;
 };
   
+  
+  // this is what makes the player move
 document.onkeydown = function(event) {
     if(event.keyCode === 87){
         player.pressingUp = true;
@@ -154,6 +173,8 @@ document.onkeydown = function(event) {
         player.pressingLeft = true;
     }
 };
+
+// this is what makes the player stop moving
 document.onkeyup = function(event) {
     if(event.keyCode === 87){
         player.pressingUp = false;
@@ -165,6 +186,8 @@ document.onkeyup = function(event) {
         player.pressingLeft = false;
     }
 };
+
+// do not allow the player to go off the map
 var updatePlayerPosition = function(){
     if(player.pressingUp)
         player.y -= 10;
@@ -187,12 +210,15 @@ var updatePlayerPosition = function(){
         player.y = height;
 };
    
+   // update position, also tracks , deletes and draws the player
 var updateEntity = function(anything) {
     updateEntityPosition(anything);
     drawEntity(anything);
     
     
 };
+
+// controls the increments of player movement
 var updateEntityPosition = function(anything){
     if(anything.type === "player"){
         if(player.pressingUp)
@@ -237,16 +263,23 @@ var updateEntityPosition = function(anything){
 };
 }
     
+    // deletes and draws things
 var drawEntity = function(anything) {
     ctx.save();
     ctx.fillStyle = anything.color;
     ctx.fillRect(anything.x - anything.width/2, anything.y - anything.height/2, anything.width, anything.height);
     ctx.restore();
 };
+
+// fires the bullets
 document.onclick = function(mouse){
         performAttack(player);
 };
 
+
+
+
+// same thing as generatesBullets
 var performAttack = function(actor) {
      if(actor.attackCounter > 25) {
         generateBullets(actor);
@@ -254,6 +287,7 @@ var performAttack = function(actor) {
     }
 };
 
+// this is the "special" attack
 document.oncontextmenu = function(mouse){
     performSpecialAttack(player);
 
@@ -263,9 +297,9 @@ document.oncontextmenu = function(mouse){
 var performSpecialAttack = function(actor) {
     if(player.attackCounter > 50) {
         
-        generateBullets(actor, actor.aimAngle - 5);
-        generateBullets(actor, actor.aimAngle);
-        generateBullets(actor, actor.aimAngle + 5);
+        // generateBullets(actor, actor.aimAngle - 5);
+        // generateBullets(actor, actor.aimAngle);
+        // generateBullets(actor, actor.aimAngle + 5);
     // while loop
     // let i = 0;
     // while(i < 360){
@@ -273,13 +307,15 @@ var performSpecialAttack = function(actor) {
     //     i++
     //  }
     
-    // for(let i = 0; i < 360; i++){
-    //     generateBullets(player, i)
-    // }
+    for(let i = 0; i < 360; i++){
+        generateBullets(actor, i)
+    }
     // }
     // mouse.preventDefault();
     }
 }
+
+// creates the enemy object
 var randomlyGenerateEnemy = function() {
     var height = 10+Math.random()*30;
     var width = 10+Math.random()*40;
@@ -288,8 +324,13 @@ var randomlyGenerateEnemy = function() {
     var id = Math.random();
     var spdX = 10+Math.random()*20;
     var spdY = 10+Math.random()*20;
+    var atkSpd = 5;
+    var attackCounter = 25;
+    var aimAngle = player;
     Enemy(id, x, y, spdX, spdY, width, height);
 };
+
+// creates the upgrade objects
 var randomlyGenerateUpgrade = function() {
     var height = 10;
     var width = 10;
@@ -308,6 +349,8 @@ var randomlyGenerateUpgrade = function() {
     Upgrade(id, x, y, spdX, spdY, width, height, category, color);
     // console.log(category)
 };
+
+// creates the bullets
 var generateBullets = function(actor, angleOverRide) {
     var height = 10;
     var width = 10;
@@ -331,6 +374,7 @@ var update = function() {
     }
     if(frameCount % 75 === 0) {
         randomlyGenerateUpgrade();
+        generateBullets(Enemy, player)
     }
     player.attackCounter += player.atkSpd;
     
@@ -353,7 +397,9 @@ var update = function() {
         }
     }
     
-    // this is what is breaking it
+    // first create a function to fire at the player from enemy
+    // then create if logic that puts that fire on a timer
+    
     for(let i in upgradeList){
         updateEntity(upgradeList[i]);
         
@@ -388,6 +434,8 @@ var update = function() {
     ctx.fillText(player.hp + "HP", 30, 30);
     ctx.fillText(score + "Score", 200, 30);
 };
+
+// this is what restarts the game
 var startNewGame = function() {
         timeSinceGameStarted = Date.now();
         player.hp = 10;
@@ -401,8 +449,11 @@ var startNewGame = function() {
         randomlyGenerateEnemy();
     
 };
+
+// initialize the game
 startNewGame();
-    
+   
+   // updates the characters on the screen 
 setInterval(update, 100);
     
 </script>
